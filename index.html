@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CV Analyzer — AI Career Assistant</title>
+<!-- PDF.js library browser mein PDF read karne ke liye -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple-50: #EEEDFE; --purple-200: #AFA9EC; --purple-400: #7F77DD;
+    --purple-600: #534AB7; --purple-800: #3C3489;
+    --teal-50: #E1F5EE; --teal-600: #0F6E56;
+    --green-50: #EAF3DE; --green-400: #639922; --green-600: #3B6D11;
+    --amber-50: #FAEEDA; --amber-600: #854F0B;
+    --coral-50: #FAECE7; --coral-400: #D85A30; --coral-600: #993C1D;
+    --blue-50: #E6F1FB; --blue-400: #378ADD; --blue-600: #185FA5;
+    --pink-400: #D4537E;
+    --gray-200: #B4B2A9; --gray-400: #888780; --gray-600: #5F5E5A;
+    --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F6F5F0; color: #1a1a18; min-height: 100vh; line-height: 1.6;
+  }
+
+  nav {
+    background: #fff; border-bottom: 0.5px solid #dddbd3;
+    padding: 0 2rem; display: flex; align-items: center;
+    justify-content: space-between; height: 56px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-logo { width: 32px; height: 32px; border-radius: 8px; background: var(--purple-600); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .nav-title { font-size: 15px; font-weight: 600; }
+  .nav-badge { font-size: 11px; padding: 3px 10px; border-radius: 99px; background: var(--purple-50); color: var(--purple-800); border: 0.5px solid var(--purple-200); font-weight: 500; }
+
+  .hero { text-align: center; padding: 3rem 2rem 1.5rem; max-width: 680px; margin: 0 auto; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--purple-600); background: var(--purple-50); border: 0.5px solid var(--purple-200); border-radius: 99px; padding: 4px 12px; margin-bottom: 14px; }
+  .hero h1 { font-size: clamp(24px, 5vw, 34px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px; }
+  .hero h1 span { color: var(--purple-600); }
+  .hero p { font-size: 15px; color: var(--gray-600); max-width: 530px; margin: 0 auto 1.5rem; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  .pipeline-wrap { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 1rem 0 0.75rem; margin-bottom: 1.25rem; scrollbar-width: none; }
+  .pipeline-wrap::-webkit-scrollbar { display: none; }
+  .pipe-pill { font-size: 11px; padding: 5px 12px; border-radius: 99px; font-weight: 500; border: 0.5px solid; white-space: nowrap; transition: all 0.3s; flex-shrink: 0; }
+  .pipe-pill.idle { background: #fff; color: var(--gray-400); border-color: #dddbd3; }
+  .pipe-pill.active { background: var(--purple-50); color: var(--purple-800); border-color: var(--purple-400); }
+  .pipe-pill.done { background: var(--green-50); color: var(--green-600); border-color: var(--green-400); }
+  .pipe-arrow { color: var(--gray-200); font-size: 14px; flex-shrink: 0; }
+
+  .card { background: #fff; border: 0.5px solid #dddbd3; border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; margin-bottom: 12px; }
+  .card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .upload-zone { border: 1.5px dashed #c9c7bf; border-radius: var(--radius-lg); padding: 2.5rem 2rem; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .upload-zone:hover, .upload-zone.drag { background: var(--purple-50); border-color: var(--purple-400); }
+  .upload-icon { font-size: 42px; margin-bottom: 12px; display: block; }
+  .upload-zone h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .upload-zone p { font-size: 13px; color: var(--gray-400); }
+  .upload-zone input[type="file"] { display: none; }
+  .upload-cta { display: inline-block; margin-top: 14px; padding: 9px 22px; background: var(--purple-600); color: #fff; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  .status-bar { display: none; font-size: 13px; color: var(--gray-600); padding: 10px 0; align-items: center; gap: 8px; }
+  .status-bar.show { display: flex; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--purple-200); border-top-color: var(--purple-600); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--purple-50); border: 0.5px solid var(--purple-200); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--purple-800); flex-shrink: 0; }
+  .profile-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .profile-name { font-size: 15px; font-weight: 600; }
+  .profile-role { font-size: 12px; color: var(--gray-600); margin-top: 2px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 99px; border: 0.5px solid; }
+  .tag-p { background: var(--purple-50); color: var(--purple-800); border-color: var(--purple-200); }
+  .tag-t { background: var(--teal-50); color: var(--teal-600); border-color: #9FE1CB; }
+  .tag-g { background: var(--green-50); color: var(--green-600); border-color: #C0DD97; }
+
+  .score-row { display: flex; align-items: center; gap: 1.2rem; }
+  .score-ring { width: 88px; height: 88px; flex-shrink: 0; }
+  .score-lines { flex: 1; }
+  .score-line { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 0.5px solid #eeecea; }
+  .score-line span { color: var(--gray-600); }
+
+  .skill-item { margin-bottom: 11px; }
+  .skill-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-600); margin-bottom: 4px; }
+  .bar-bg { background: #f0eeea; border-radius: 99px; height: 7px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; width: 0; transition: width 1s; }
+
+  .rec-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid #eeecea; font-size: 13px; }
+  .rec-dot { width: 20px; height: 20px; border-radius: 6px; background: var(--purple-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; }
+
+  .chat-messages { background: #f9f8f5; border-radius: var(--radius-md); padding: 1rem; min-height: 160px; max-height: 260px; overflow-y: auto; margin-bottom: 10px; }
+  .msg { margin-bottom: 12px; font-size: 13px; line-height: 1.55; }
+  .msg.user { text-align: right; }
+  .msg.user .bubble { background: var(--purple-600); color: #fff; border-radius: 14px 14px 3px 14px; padding: 8px 12px; display: inline-block; max-width: 85%; text-align: left; }
+  .msg.ai .sender { font-size: 11px; color: var(--gray-400); margin-bottom: 3px; }
+  .msg.ai .bubble { background: #fff; color: #1a1a18; border: 0.5px solid #dddbd3; border-radius: 14px 14px 14px 3px; padding: 8px 12px; display: inline-block; max-width: 90%; text-align: left; }
+  .chat-row { display: flex; gap: 8px; }
+  .chat-row input { flex: 1; padding: 10px 14px; border: 0.5px solid #dddbd3; border-radius: var(--radius-md); font-size: 13px; background: #fff; outline: none; }
+  .chat-row button { padding: 10px 18px; background: var(--purple-600); color: #fff; border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: #fff; padding: 10px 20px; border-radius: var(--radius-md); font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+  .toast.show { opacity: 1; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">🎓</div>
+    <span class="nav-title">CV Analyzer</span>
+  </div>
+  <span class="nav-badge">AI Powered</span>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">✨ Instant AI Career Assistant</div>
+  <h1>Get a Full <span>AI Analysis</span><br>of Your CV</h1>
+  <p>Upload your PDF resume to get your score and career recommendations instantly.</p>
+</div>
+
+<main>
+  <div class="pipeline-wrap">
+    <span class="pipe-pill idle" id="p1">📄 Read PDF</span>
+    <span class="pipe-arrow">›</span>
+    <span class="pipe-pill idle" id="p2">🤖 AI Analysis</span>
+    <span class="pipe-arrow">›</span>
+    <span class="pipe-pill idle" id="p3">📊 Dashboard Ready</span>
+  </div>
+
+  <div class="card">
+    <div class="card-label">📁 Upload Your Resume (PDF)</div>
+    <div class="upload-zone" id="drop-zone"
+      ondragover="event.preventDefault(); this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event)"
+      onclick="document.getElementById('file-input').click()">
+      <span class="upload-icon">📋</span>
+      <h3>Drop your CV here</h3>
+      <p>PDF format · Instant analysis</p>
+      <span class="upload-cta">Choose File</span>
+      <input type="file" id="file-input" accept=".pdf" onchange="handleFile(event)" />
+    </div>
+    <div class="status-bar" id="status-bar">
+      <div class="spinner"></div>
+      <span id="status-text">Processing…</span>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-label">👤 Student Profile</div>
+        <div class="profile-row" id="profile-row"></div>
+        <div class="tags" id="exp-tags"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">🎯 Job-Fit Score</div>
+        <div class="score-row">
+          <svg class="score-ring" viewBox="0 0 88 88">
+            <circle cx="44" cy="44" r="36" fill="none" stroke="#eeecea" stroke-width="9"/>
+            <circle cx="44" cy="44" r="36" fill="none" stroke="#7F77DD" stroke-width="9"
+              stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="226"
+              id="ring" transform="rotate(-90 44 44)" style="transition: stroke-dashoffset 1.3s"/>
+            <text x="44" y="49" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1a18" id="ring-label">—</text>
+          </svg>
+          <div class="score-lines">
+            <div class="score-line"><span>Skills</span><strong id="sc-skills">—</strong></div>
+            <div class="score-line"><span>Experience</span><strong id="sc-exp">—</strong></div>
+            <div class="score-line"><span>Education</span><strong id="sc-edu">—</strong></div>
+            <div class="score-line"><span>Communication</span><strong id="sc-comm">—</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-label">💻 Extracted Skills</div>
+        <div id="skills-bars"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">💡 Recommendations</div>
+        <div id="rec-list"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">💬 Ask AI Questions</div>
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-row">
+        <input type="text" id="chat-input" placeholder="Ask anything about your CV..." onkeydown="if(event.key==='Enter') sendChat()" />
+        <button onclick="sendChat()">Ask AI →</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  function setStatus(msg, show = true) {
+    const bar = document.getElementById('status-bar');
+    bar.className = 'status-bar' + (show ? ' show' : '');
+    document.getElementById('status-text').textContent = msg;
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') processPdf(f);
+    else showToast('Please upload a PDF file.');
+  }
+
+  function handleFile(e) {
+    const f = e.target.files[0];
+    if (f) processPdf(f);
+  }
+
+  async function extractTextFromPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
+    }
+    return fullText;
+  }
+
+  let extractedCvText = '';
+  let cvData = null;
+
+  async function processPdf(file) {
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('p1').className = 'pipe-pill active';
+    setStatus('Reading PDF text in browser...');
+
+    try {
+      extractedCvText = await extractTextFromPDF(file);
+      document.getElementById('p1').className = 'pipe-pill done';
+      document.getElementById('p2').className = 'pipe-pill active';
+      setStatus('Analyzing CV with AI...');
+
+      // Netlify function ko call kar rahe hain jahan aapki API key secure hai
+      const resp = await fetch('/.netlify/functions/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvText: extractedCvText })
+      });
+
+      const json = await resp.json();
+      if (!resp.ok || !json.success) throw new Error(json.error || 'Analysis failed');
+
+      cvData = json.data;
+      document.getElementById('p2').className = 'pipe-pill done';
+      document.getElementById('p3').className = 'pipe-pill done';
+      setStatus('', false);
+      renderDashboard(cvData);
+      document.getElementById('chat-messages').innerHTML = '';
+      appendMsg('ai', `Hello! I have analyzed ${cvData.name || 'your'} resume. Your match score is ${cvData.match_score}%. Ask me anything!`);
+    } catch (err) {
+      setStatus('Error: ' + err.message);
+      showToast('❌ Analysis failed: ' + err.message);
+    }
+  }
+
+  function renderDashboard(d) {
+    const initials = (d.name || 'CV').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    document.getElementById('profile-row').innerHTML =
+      `<div class="avatar">${initials}</div>
+       <div><div class="profile-name">${d.name || 'Student'}</div>
+       <div class="profile-role">${d.headline || ''}</div></div>`;
+
+    const tags = document.getElementById('exp-tags');
+    tags.innerHTML = '';
+    (d.experience_tags || []).forEach((t, i) => {
+      const s = document.createElement('span');
+      s.className = 'tag tag-' + ['p','t','g'][i%3];
+      s.textContent = t; tags.appendChild(s);
+    });
+
+    const score = Math.round(d.match_score || 0);
+    setTimeout(() => { document.getElementById('ring').style.strokeDashoffset = 226 - (226 * score / 100); }, 150);
+    document.getElementById('ring-label').textContent = score + '%';
+
+    const ss = d.subscores || {};
+    document.getElementById('sc-skills').textContent = Math.round(ss.skills || 0) + '%';
+    document.getElementById('sc-exp').textContent = Math.round(ss.experience || 0) + '%';
+    document.getElementById('sc-edu').textContent = Math.round(ss.education || 0) + '%';
+    document.getElementById('sc-comm').textContent = Math.round(ss.communication || 0) + '%';
+
+    const barsEl = document.getElementById('skills-bars');
+    barsEl.innerHTML = '';
+    const colors = ['#7F77DD','#1D9E75','#D85A30','#378ADD','#D4537E'];
+    (d.skills || []).forEach((sk, i) => {
+      const pct = Math.round(sk.pct || 0);
+      const div = document.createElement('div');
+      div.className = 'skill-item';
+      div.innerHTML = `<div class="skill-meta"><strong>${sk.label}</strong><span>${pct}%</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="background:${colors[i%colors.length]}" data-pct="${pct}"></div></div>`;
+      barsEl.appendChild(div);
+    });
+    setTimeout(() => document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.pct + '%'), 200);
+
+    const recEl = document.getElementById('rec-list');
+    recEl.innerHTML = '';
+    (d.recommendations || []).forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'rec-item';
+      div.innerHTML = `<div class="rec-dot">✓</div><span>${r}</span>`;
+      recEl.appendChild(div);
+    });
+
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const q = input.value.trim();
+    if (!q || !extractedCvText) return;
+    input.value = '';
+    appendMsg('user', q);
+
+    const thinkId = 'think-' + Date.now();
+    appendMsg('ai', 'Thinking...', thinkId);
+
+    try {
+      const resp = await fetch('/.netlify/functions/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvText: extractedCvText, question: q })
+      });
+      const json = await resp.json();
+      if (!resp.ok || !json.success) throw new Error(json.error || 'Chat failed');
+      document.getElementById(thinkId).querySelector('.bubble').textContent = json.reply;
+    } catch (err) {
+      document.getElementById(thinkId).querySelector('.bubble').textContent = 'Error: ' + err.message;
+    }
+  }
+
+  function appendMsg(role, text, id) {
+    const area = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    if (id) div.id = id;
+    div.innerHTML = role === 'ai'
+      ? `<div class="sender">🤖 AI Assistant</div><div class="bubble">${text}</div>`
+      : `<div class="bubble">${text}</div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+  }
+</script>
+</body>
+</html>
